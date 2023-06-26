@@ -1,14 +1,19 @@
 package com.shaikhsoheb.dnsandblescanner.view
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -23,6 +28,29 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    private val bleScanner by lazy {
+        bluetoothAdapter.bluetoothLeScanner
+    }
+
+    private val scanSettings = ScanSettings.Builder()
+        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+        .build()
+
+    private val scanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            with(result.device) {
+                Log.i("ScanCallback", "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address")
+            }
+        }
+    }
+
+    private var isScanning = false
+        set(value) {
+            field = value
+            runOnUiThread { binding.btScan.text = if (value) "Stop Scan" else "Start Scan" }
+        }
+
     private val bluetoothAdapter: BluetoothAdapter by lazy {
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
@@ -43,9 +71,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btScan.setOnClickListener {
-            startBleScan()
+            if (isScanning) {
+                stopBleScan()
+            } else {
+                startBleScan()
+            }
         }
-
     }
 
     override fun onResume() {
@@ -62,11 +93,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun startBleScan() {
         if (!hasRequiredRuntimePermissions()) {
             requestRelevantRuntimePermissions()
         } else {
-            // TO DO:
+            bleScanner.startScan(null, scanSettings, scanCallback)
+            isScanning = true
         }
     }
 
@@ -112,8 +145,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private fun stopBleScan() {
+        bleScanner.stopScan(scanCallback)
+        isScanning = false
+    }
+
     override fun onDestroy() {
         binding.btScan.setOnClickListener(null)
+        stopBleScan()
         super.onDestroy()
     }
 }
