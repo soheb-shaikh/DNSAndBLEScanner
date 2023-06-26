@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.dnsandblescanner'
+    namespace 'com.shaikhsoheb.dnsandblescanner'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.dnsandblescanner"
+        applicationId "com.shaikhsoheb.dnsandblescanner"
         minSdk 26
         targetSdk 34
         versionCode 1
@@ -68,10 +68,6 @@ dependencies {
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
-
-    // Glide
-    implementation 'com.github.bumptech.glide:glide:4.15.1'
-    kapt 'com.github.bumptech.glide:compiler:4.15.1'
 
     // Test
     testImplementation 'junit:junit:4.13.2'
