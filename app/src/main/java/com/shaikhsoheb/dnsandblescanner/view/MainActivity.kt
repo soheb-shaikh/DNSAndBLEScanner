@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.shaikhsoheb.dnsandblescanner.adapters.ScanResultAdapter
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.RUNTIME_PERMISSION_REQUEST_CODE
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.hasRequiredRuntimePermissions
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.requestRelevantRuntimePermissions
@@ -37,14 +38,6 @@ class MainActivity : AppCompatActivity() {
         .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
         .build()
 
-    private val scanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult) {
-            with(result.device) {
-                Log.i("ScanCallback", "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address")
-            }
-        }
-    }
-
     private var isScanning = false
         set(value) {
             field = value
@@ -61,6 +54,30 @@ class MainActivity : AppCompatActivity() {
     ) { result: ActivityResult ->
         if (result.resultCode != Activity.RESULT_OK) {
             promptEnableBluetooth()
+        }
+    }
+
+    private val scanResults = mutableListOf<ScanResult>()
+    private val scanResultAdapter: ScanResultAdapter by lazy {
+        ScanResultAdapter(scanResults) {
+            // Pair ble device
+        }
+    }
+
+    private val scanCallback = object : ScanCallback() {
+        override fun onScanResult(callbackType: Int, result: ScanResult) {
+            val indexQuery = scanResults.indexOfFirst { it.device.address == result.device.address }
+            if (indexQuery != -1) { // A scan result already exists with the same address
+                scanResults[indexQuery] = result
+                scanResultAdapter.notifyItemChanged(indexQuery)
+            } else {
+                scanResults.add(result)
+                scanResultAdapter.notifyItemInserted(scanResults.size - 1)
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            Log.e("ScanCallback", "onScanFailed: code $errorCode")
         }
     }
 
@@ -98,6 +115,8 @@ class MainActivity : AppCompatActivity() {
         if (!hasRequiredRuntimePermissions()) {
             requestRelevantRuntimePermissions()
         } else {
+            scanResults.clear()
+            scanResultAdapter.notifyDataSetChanged()
             bleScanner.startScan(null, scanSettings, scanCallback)
             isScanning = true
         }
