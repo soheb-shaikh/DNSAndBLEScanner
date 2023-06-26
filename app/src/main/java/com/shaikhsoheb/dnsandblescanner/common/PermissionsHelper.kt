@@ -2,19 +2,17 @@ package com.shaikhsoheb.dnsandblescanner.common
 
 import android.Manifest
 import android.content.Context
-import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Build
-import android.view.View.OnClickListener
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 object PermissionsHelper {
 
-    private const val RUNTIME_PERMISSION_REQUEST_CODE = 1001
+    const val RUNTIME_PERMISSION_REQUEST_CODE = 1001
 
     fun Context.hasPermission(permissionType: String): Boolean {
         return ContextCompat.checkSelfPermission(this, permissionType) ==
@@ -30,7 +28,7 @@ object PermissionsHelper {
         }
     }
 
-    private fun AppCompatActivity.requestRelevantRuntimePermissions() {
+    fun AppCompatActivity.requestRelevantRuntimePermissions() {
         if (hasRequiredRuntimePermissions()) { return }
         when {
             Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> {
