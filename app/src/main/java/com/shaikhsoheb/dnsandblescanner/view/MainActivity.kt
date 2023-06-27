@@ -11,6 +11,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -20,11 +22,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.shaikhsoheb.dnsandblescanner.adapters.ScanResultAdapter
+import com.shaikhsoheb.dnsandblescanner.common.NsdHelper
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.RUNTIME_PERMISSION_REQUEST_CODE
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.hasRequiredRuntimePermissions
 import com.shaikhsoheb.dnsandblescanner.common.PermissionsHelper.requestRelevantRuntimePermissions
 import com.shaikhsoheb.dnsandblescanner.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -78,6 +82,34 @@ class MainActivity : AppCompatActivity() {
 
         override fun onScanFailed(errorCode: Int) {
             Log.e("ScanCallback", "onScanFailed: code $errorCode")
+        }
+    }
+
+    // Need to check hilt dependency error.
+   // @Inject lateinit var nsdHelper: NsdHelper
+
+    private var mServiceName = ""
+
+    private val registrationListener = object : NsdManager.RegistrationListener {
+
+        override fun onServiceRegistered(NsdServiceInfo: NsdServiceInfo) {
+            // Save the service name. Android may have changed it in order to
+            // resolve a conflict, so update the name you initially requested
+            // with the name Android actually used.
+            mServiceName = NsdServiceInfo.serviceName
+        }
+
+        override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+            Log.e("Registration Failed for $mServiceName with errorCode $errorCode", errorCode.toString())
+        }
+
+        override fun onServiceUnregistered(arg0: NsdServiceInfo) {
+            // Service has been unregistered. This only happens when you call
+            // NsdManager.unregisterService() and pass in this listener.
+        }
+
+        override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
+            Log.e("Unregistration Failed for $mServiceName with errorCode $errorCode", errorCode.toString())
         }
     }
 
